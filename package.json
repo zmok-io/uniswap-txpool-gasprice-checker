@@ -1,0 +1,37 @@
+{
+  "name": "Txpool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "run-func main.js start"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@anthonyalbertyn/map-expire": "^1.0.0",
+    "async": "^3.2.0",
+    "async-mutex": "^0.2.6",
+    "async-redis": "^1.1.7",
+    "bignumber.js": "^9.0.1",
+    "body-parser": "^1.19.2",
+    "console-log-level": "^1.4.1",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.3",
+    "jayson": "^3.6.6",
+    "make-runnable": "^1.3.8",
+    "memory-cache": "^0.2.0",
+    "micromatch": "^4.0.5",
+    "minimist": "^1.2.5",
+    "node-fetch": "^2.6.1",
+    "node-jsonrpc-client": "^2.0.0",
+    "node-redis-pubsub": "^5.0.0",
+    "node-schedule": "^2.0.0",
+    "node-workers-pool": "^1.1.4",
+    "redis": "^3.0.2",
+    "run-func": "^1.0.5",
+    "solc": "^0.7.5",
+    "web3": "^1.7.3",
+    "workerpool": "^6.0.3"
+  }
+}
