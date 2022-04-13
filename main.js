@@ -85,6 +85,33 @@ function getPriceInGwei(price) {
   return web3.utils.fromWei(price.toString(), 'gwei')
 }
 
+function getEarlierAccountNonce(client, txFrom, currentNonce) {
+  return new Promise(function(resolve, reject) {
+    var earlierNonce = currentNonce;
+
+    client.call("zmk_txpool_search", [{
+      "from": txFrom
+    }])
+    .then((callResult) => {
+      if (callResult && callResult.result) {
+        let txItems = callResult.result.pending
+        for (const fromKey in txItems) {
+          // log.debug("fromKey: " + fromKey);
+          const fromItems = txItems[fromKey]
+          for (const txKey in fromItems) {
+            const tx = fromItems[txKey]
+            if (tx.nonce !== undefined && tx.nonce <= earlierNonce) {
+              earlierNonce = tx.nonce
+            }
+          }
+        }
+        resolve(earlierNonce)
+      }
+    })
+  });
+
+}
+
 
 const doWork = async (startTime) => {
   while (true) {
@@ -95,48 +122,57 @@ const doWork = async (startTime) => {
     const client = new JsonRpc("https://api.zmok.io/fr/wannhlnavli9kzyj");
     // var call1 = callWithTimeout(
     client.call("zmk_txpool_search", [{
-        "to": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
-        "input": "0x5ae401dc*",
-        "value": "0x0"
-      }])
-      .then((callResult) => {
-        // log.debug("callResult: " + callResult);
-        if (callResult && callResult.result) {
+      "to": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
+      "input": "0x5ae401dc*",
+      "value": "0x0"
+    }])
+    .then(async (callResult) => {
+      // log.debug("callResult: " + callResult);
+      if (callResult && callResult.result) {
 
 
 
-          // log.debug("callResult.result: " + callResult.result);
-          // log.debug("result: " + JSON.stringify(callResult.result));
-          let txItems = callResult.result.pending
+        // log.debug("callResult.result: " + callResult.result);
+        // log.debug("result: " + JSON.stringify(callResult.result));
+        let txItems = callResult.result.pending
 
-          var maxGasPrice = 0;
-          var i = 0;
-          for (const fromKey in txItems) {
-            // log.debug("fromKey: " + fromKey);
-            const fromItems = txItems[fromKey]
-            i++;
-            for (const txKey in fromItems) {
-              const tx = fromItems[txKey]
-              log.debug("index: " + i + ", tx: " + tx.hash + ", gasPrice: " + (tx.gasPrice !== undefined ? getPriceInGwei(tx.gasPrice) : "undefined") + " gwei");
-              if (tx.gasPrice !== undefined && BigInt(tx.gasPrice) > BigInt(maxGasPrice)) {
-                maxGasPrice = tx.gasPrice
-              }
+        var maxGasPrice = 0;
+        var i = 0;
+        for (const fromKey in txItems) {
+          // log.debug("fromKey: " + fromKey);
+          const fromItems = txItems[fromKey]
+          i++;
+          for (const txKey in fromItems) {
+            const tx = fromItems[txKey]
+
+            var earlierAccountNonce = await getEarlierAccountNonce(client, tx.from, tx.nonce)
+            var skipProcessing = (tx.nonce > earlierAccountNonce)
+
+            log.debug("index: " + i + ", tx: " + tx.hash + ", nonce: " + parseInt(tx.nonce, 16) + ", earlierAccountNonce: " + parseInt(earlierAccountNonce, 16)
+              + ", gasPrice: " + (tx.gasPrice !== undefined ? getPriceInGwei(tx.gasPrice) + " gwei" : "undefined")
+              + (skipProcessing ? " -> skip" : ""));
+
+            if (tx.gasPrice !== undefined && tx.nonce == earlierAccountNonce &&  BigInt(tx.gasPrice) > BigInt(maxGasPrice)) {
+              maxGasPrice = tx.gasPrice
             }
           }
-          log.info("Max. gas price: " + getPriceInGwei(maxGasPrice) + " gwei")
-
         }
-      })
-      .catch((error) => {
-        log.error("error: " + error.message);
-      })
-      // , 10000)
+        log.info("Max. gas price: " + getPriceInGwei(maxGasPrice) + " gwei")
+
+      }
+    })
+    .catch((error) => {
+      log.error("error: " + error.message);
+    })
+    // , 2000)
 
 
     log.info("#######################################################################")
 
 
     await sleep(5000);
+    // TODO zmazat toto
+    return;
   }
 }
 
