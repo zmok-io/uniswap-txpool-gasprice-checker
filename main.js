@@ -77,13 +77,13 @@ const doWork = async (startTime) => {
   while (true) {
 
     if (alreadyProcessing) {
-      // log.info("already processing, skip...")
+      log.info("already processing, skip...")
       await sleep(1000);
       continue;
     }
     alreadyProcessing = true;
 
-    const client = new JsonRpc("https://api.zmok.io/fr/wannhlnavli9kzyj");
+    const client = new JsonRpc(process.env.ZMOK_FR_PROVIDER_URL);
 
     client.call("zmk_txpool_search", [{
         "to": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
