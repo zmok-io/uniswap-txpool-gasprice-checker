@@ -77,7 +77,7 @@ const doWork = async (startTime) => {
   while (true) {
 
     if (alreadyProcessing) {
-      log.info("already processing, skip...")
+      // log.debug("already processing, skip...")
       await sleep(1000);
       continue;
     }
@@ -115,7 +115,7 @@ const doWork = async (startTime) => {
           }
 
           let calls = await Promise.all(eanPromises).then(() => {
-            log.debug("... all calls finished...")
+            // log.debug("... all calls finished...")
             Font.create("" + getPriceInGwei(maxGasPrice) + " gwei", 'Doom', function(err, rendered) {
               log.info(rendered);
               log.info("Max. gas price: " + getPriceInGwei(maxGasPrice) + " gwei, tx: " + maxGasPriceTxHash)
