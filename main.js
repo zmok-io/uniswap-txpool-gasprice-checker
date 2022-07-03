@@ -38,7 +38,7 @@ function callWithTimeout(callback, timeoutInMillis) {
         reject("Timed out.");
       }, timeoutInMillis);
     }).catch((error) => {
-      log.error("error: " + error)
+      // log.error("error: " + error)
     })
   ]);
 }
@@ -51,7 +51,7 @@ function getEarlierAccountNonce(client, txFrom, currentNonce) {
   return new Promise(function(resolve, reject) {
     var earlierNonce = currentNonce;
 
-    // callWithTimeout(
+    callWithTimeout(
     // XXX old method
     // client.call("zmk_txpool_search", [{
     //    "from": txFrom
@@ -71,7 +71,7 @@ function getEarlierAccountNonce(client, txFrom, currentNonce) {
             resolve(earlierNonce)
           }
         }
-      }) // , 15000)
+      }) , 15000)
       .catch((error) => {
         reject(error)
       })
@@ -81,6 +81,9 @@ function getEarlierAccountNonce(client, txFrom, currentNonce) {
 
 
 const doWork = async (startTime) => {
+
+  const client = new JsonRpc(process.env.ZMOK_FR_PROVIDER_URL);
+
   while (true) {
 
     if (alreadyProcessing) {
@@ -90,8 +93,7 @@ const doWork = async (startTime) => {
     }
     alreadyProcessing = true;
 
-    const client = new JsonRpc(process.env.ZMOK_FR_PROVIDER_URL);
-
+    callWithTimeout(
     // XXX old method
     // client.call("zmk_txpool_search", [{
     //    "to": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45",
@@ -121,13 +123,13 @@ const doWork = async (startTime) => {
                   maxGasPriceTxHash = tx.hash
                 }
               }).catch((error) => {
-                log.error("error: " + error.message)
+                // log.error("error: " + error.message)
               });
               eanPromises.push(eanPromise)
             }
           }
 
-          let calls = await Promise.all(eanPromises).then(() => {
+          let calls = await Promise.allSettled(eanPromises).then(() => {
             // log.debug("... all calls finished...")
             Font.create("" + getPriceInGwei(maxGasPrice) + " gwei", 'Doom', function(err, rendered) {
               log.info(rendered);
@@ -142,7 +144,7 @@ const doWork = async (startTime) => {
       .catch((error) => {
         log.error("error: " + error.message);
         alreadyProcessing = false;
-      })
+      }), 15000)
     log.info("#######################################################################")
   }
 }
