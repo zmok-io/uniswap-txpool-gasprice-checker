@@ -60,7 +60,7 @@ function getEarlierAccountNonce(client, txFrom, currentNonce) {
       .then((callResult) => {
         // log.info("callResult2" + callResult)
         if (callResult) {
-          let txItems = callResult.result.pending
+          let txItems = callResult.pending
           if (txItems != null) {
             for (const fromKey in txItems) {
               const tx = txItems[fromKey]
@@ -102,7 +102,7 @@ const doWork = async (startTime) => {
         .then(async (callResult) => {
         if (callResult) {
           // log.info(callResult)
-          let txItems = callResult.result.pending
+          let txItems = callResult.pending
           var maxGasPrice = 0;
           var maxGasPriceTxHash = -1
           var eanPromises = []
