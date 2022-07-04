@@ -37,8 +37,6 @@ function callWithTimeout(callback, timeoutInMillis) {
       setTimeout(function() {
         reject("Timed out.");
       }, timeoutInMillis);
-    }).catch((error) => {
-      // log.error("error: " + error)
     })
   ]);
 }
@@ -46,39 +44,6 @@ function callWithTimeout(callback, timeoutInMillis) {
 function getPriceInGwei(price) {
   return web3.utils.fromWei(price.toString(), 'gwei');
 }
-
-function getEarlierAccountNonce(client, txFrom, currentNonce) {
-  return new Promise(function(resolve, reject) {
-    var earlierNonce = currentNonce;
-
-    callWithTimeout(
-    // XXX old method
-    // client.call("zmk_txpool_search", [{
-    //    "from": txFrom
-    //  }])
-    client.call("zmk_txpool_query", ["'from' = '" + txFrom + "'"])
-      .then((callResult) => {
-        // log.info("callResult2" + callResult)
-        if (callResult) {
-          let txItems = callResult.pending
-          if (txItems != null) {
-            for (const fromKey in txItems) {
-              const tx = txItems[fromKey]
-              if (tx.nonce !== undefined && tx.nonce <= earlierNonce) {
-                earlierNonce = tx.nonce
-              }
-            }
-            resolve(earlierNonce)
-          }
-        }
-      }) , 15000)
-      .catch((error) => {
-        reject(error)
-      })
-  });
-
-}
-
 
 const doWork = async (startTime) => {
 
@@ -107,44 +72,34 @@ const doWork = async (startTime) => {
           let txItems = callResult.pending
           var maxGasPrice = 0;
           var maxGasPriceTxHash = -1
+
           var eanPromises = []
           if (txItems != null) {
             for (const fromKey in txItems) {
               const tx = txItems[fromKey]
               // log.info(tx)
-              var eanPromise = getEarlierAccountNonce(client, tx.from, tx.nonce).then((earlierAccountNonce) => {
-                var skipProcessing = (tx.nonce > earlierAccountNonce)
 
-                log.debug("tx: " + tx.hash + ", from: " + tx.from + ", gas price: " + (tx.gasPrice != undefined ? getPriceInGwei(tx.gasPrice) + " gwei" : "undefined") +
-                  (skipProcessing ? " -> skip, lower nonce found" : ""));
+              log.debug("tx: " + tx.hash + ", from: " + tx.from + ", gas price: " + (tx.gasPrice != undefined ? getPriceInGwei(tx.gasPrice) + " gwei" : "undefined"));
 
-                if (tx.gasPrice !== undefined && tx.nonce == earlierAccountNonce && BigInt(tx.gasPrice) > BigInt(maxGasPrice)) {
-                  maxGasPrice = tx.gasPrice
-                  maxGasPriceTxHash = tx.hash
-                }
-              }).catch((error) => {
-                // log.error("error: " + error.message)
-              });
-              eanPromises.push(eanPromise)
+              if (tx.gasPrice !== undefined && BigInt(tx.gasPrice) > BigInt(maxGasPrice)) {
+                maxGasPrice = tx.gasPrice
+                maxGasPriceTxHash = tx.hash
+              }
             }
           }
 
-          let calls = await Promise.allSettled(eanPromises).then(() => {
-            // log.debug("... all calls finished...")
-            Font.create("" + getPriceInGwei(maxGasPrice) + " gwei", 'Doom', function(err, rendered) {
-              log.info(rendered);
-              log.info("Max. gas price: " + getPriceInGwei(maxGasPrice) + " gwei, tx: " + maxGasPriceTxHash)
-            });
-            alreadyProcessing = false;
-          }).catch((error) => {
-            log.error("error: " + error.message)
-          })
+          Font.create("" + getPriceInGwei(maxGasPrice) + " gwei", 'Doom', function(err, rendered) {
+            log.info(rendered);
+            log.info("Max. gas price: " + getPriceInGwei(maxGasPrice) + " gwei, tx: " + maxGasPriceTxHash)
+          });
+          alreadyProcessing = false;
+
         }
-      })
-      .catch((error) => {
-        log.error("error: " + error.message);
-        alreadyProcessing = false;
       }), 15000)
+    .catch((error) => {
+      log.error("error 3: " + error);
+      alreadyProcessing = false;
+    })
     log.info("#######################################################################")
   }
 }
