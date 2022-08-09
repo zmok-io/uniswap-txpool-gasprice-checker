@@ -69,7 +69,7 @@ const doWork = async (startTime) => {
         .then(async (callResult) => {
         if (callResult) {
           // log.info(callResult)
-          let txItems = callResult.pending
+          let txItems = callResult.result.pending
           var maxGasPrice = 0;
           var maxGasPriceTxHash = -1
 
@@ -97,7 +97,7 @@ const doWork = async (startTime) => {
         }
       }), 15000)
     .catch((error) => {
-      log.error("error 3: " + error);
+      log.error("error 3: " + error.message);
       alreadyProcessing = false;
     })
     log.info("#######################################################################")
